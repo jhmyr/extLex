@@ -162,6 +162,6 @@ Recursion '(?R)' can also be used to process more complex expressions such as ne
         assertEquals(4, to.scan("<<><>><>").getNextToken());
     }
 
-### Furhter examples
+### Further examples
 
 See test folder e.g. for mathematical expressions.

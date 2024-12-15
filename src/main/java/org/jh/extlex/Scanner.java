@@ -1,6 +1,17 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ * Copyright 2024 jhmyr
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.jh.extlex;
 
@@ -10,10 +21,6 @@ import java.util.Stack;
 import java.util.function.Consumer;
 import org.jh.extlex.exception.UnknownTokenException;
 
-/**
- *
- * @author Jörg
- */
 public class Scanner<T> {
     private final DState rootState;
     private final Stack<DState> stackState;
@@ -30,7 +37,7 @@ public class Scanner<T> {
     
     @SuppressWarnings("unchecked")
     public boolean hasNext() throws UnknownTokenException, IOException {
-        tr.tokenAccepted();
+        tr.accepted();
 
         finState = null;
 
@@ -66,7 +73,7 @@ public class Scanner<T> {
             } else {
                 if (finState == null) {
                     int offset = tr.getOffset(); // Startpunkt
-                    int trlen = tr.getPos() - offset;
+                    int trlen = tr.getPos() - tr.getDelta() - offset;
 
                     throw new UnknownTokenException("Unknown token '" + new String(tr.getBuffer(), offset, trlen) + "'!");
                 }
@@ -157,12 +164,13 @@ public class Scanner<T> {
 
     private void getGroups() throws Exception {
         String regexp = finState.regexp;
+        int delta = tr.getDelta();
         
         for (GroupInfo groupinfo : groupList) {
             if (groupinfo.getRegExp().equals(regexp)) {
                 int startPos = groupinfo.getStartPos();
 
-                groupinfo.getGroupMeth().accept(tr.getBuffer(), startPos, groupinfo.getEndPos() - startPos);
+                groupinfo.getGroupMeth().accept(tr.getBuffer(), startPos - delta, groupinfo.getEndPos() - startPos);
             }
         }
     }
@@ -172,10 +180,11 @@ public class Scanner<T> {
 
         getGroups();
         
+        int delta = tr.getDelta();
         int offset = tr.getOffset();
 
         return finState.matchToken != null 
-                ? finState.matchToken.apply(tr.getBuffer(), offset, tr.getPos() - offset)
+                ? finState.matchToken.apply(tr.getBuffer(), offset, tr.getPos() - delta - offset)
                 : null;
     }
 }
