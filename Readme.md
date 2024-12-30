@@ -104,7 +104,7 @@ The while loop can be simplified using getAllTokens.
         assertArrayEquals(new String[]{"ab", "cd"}, tokens.toArray());
     }
 
-### Third example processing the comma in the pattern
+### Third example extended greedy quantifier for repeated pattern splitted by a character
 To reduce regular expressions, the greedy quantifier has been extended, 
 so that the previous expression can be repeated with {: and one or more characters. 
 can be repeated. Ideal for lists or mathematical expressions. 
@@ -160,6 +160,44 @@ Recursion '(?R)' can also be used to process more complex expressions such as ne
         assertEquals(2, to.scan("<<>>").getNextToken());        
         assertEquals(3, to.scan("<<><>>").getNextToken());
         assertEquals(4, to.scan("<<><>><>").getNextToken());
+    }
+
+### Fifth example with reading the positon of a token
+
+    @Test
+    // using getXPos and getYPos of TokenReader for retrieving token start position
+    // using getXEndPos and getYEndPos of TokenReader for retrieving token end position
+    public void test5() throws Exception {
+        String str = "ab cd\n ef\nhj\n";
+        List<String> tokens = new ArrayList<>();
+        TokenReader tr = new TokenReader(new StringReader(str));
+        
+        new Lexer<String>()
+                .addPattern("[a-z]+", 
+                        (t,s, l) -> Integer.toString(tr.getYPos()) + ":" + tr.getXPos() + " " + new String(t, s, l))
+                .addPattern("[ \n\r]+")
+                .scan(tr)
+                .getAllTokens((s) -> tokens.add(s));
+
+        assertArrayEquals(new String[]{"1:1 ab", "1:4 cd", "2:2 ef", "3:1 hj"}, tokens.toArray());
+    }
+
+### Fifth example with match
+For only matching tokens use the match method.
+
+    @Test
+    public void test5WithMatcher() throws Exception {
+        String str = "ab cd\n ef\nhj123\n";
+        List<String> tokens = new ArrayList<>();
+        TokenReader tr = new TokenReader(new StringReader(str));
+        
+        new Lexer<String>()
+                .addPattern("[a-z]+", 
+                        (t,s, l) -> Integer.toString(tr.getYPos()) + ":" + tr.getXPos() + " " + new String(t, s, l))
+                .match(tr)
+                .getAllTokens((s) -> tokens.add(s));
+
+        assertArrayEquals(new String[]{"1:1 ab", "1:4 cd", "2:2 ef", "3:1 hj"}, tokens.toArray());
     }
 
 ### Further examples

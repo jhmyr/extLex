@@ -27,7 +27,7 @@ public class DStateFin<T> extends DState {
     TokenMeth<T> matchToken;
     static final Consumer<Integer>[] DEFAULT_GROUP = new Consumer[0];
 
-    Consumer<Integer>[] groups = DEFAULT_GROUP;
+    private Consumer<Integer>[] groups = DEFAULT_GROUP;
     
     DStateFin(SortedList<NDState> states, String stateName, String regexp, Initializer init, TokenMeth<T> matchToken, List<BracketInfo> closingBrackets) {
         super(states, stateName);
@@ -63,5 +63,11 @@ public class DStateFin<T> extends DState {
     @Override
     final public int compareTo(DState d) {
         return super.compareTo(d);
+    }
+    
+    final public void saveGroupPos(int pos) {
+        for (Consumer<Integer> group : groups) {
+            group.accept(pos);
+        }
     }
 }

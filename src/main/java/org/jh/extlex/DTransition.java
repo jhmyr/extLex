@@ -21,9 +21,8 @@ import org.jh.extlex.util.CharRange;
 
 @SuppressWarnings("unchecked")
 public class DTransition<S> extends Transition<S> {
-    static final Consumer<Integer>[] DEFAULT_GROUP = new Consumer[0];
-
-    Consumer<Integer>[] groups;
+    private static final Consumer<Integer>[] DEFAULT_GROUP = new Consumer[0];
+    private Consumer<Integer>[] groups;
     
     public DTransition(CharRange range, S nextDState, List<Consumer<Integer>> groups) {
         super(range, nextDState);

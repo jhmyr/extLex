@@ -22,11 +22,11 @@ import java.util.function.Consumer;
 import org.jh.extlex.exception.UnknownTokenException;
 
 public class Scanner<T> {
-    private final DState rootState;
-    private final Stack<DState> stackState;
+    protected final DState rootState;
+    protected final Stack<DState> stackState;
     private final List<GroupInfo> groupList;
-    private final TokenReader tr;
-    private DStateFin<T> finState;
+    protected final TokenReader tr;
+    protected DStateFin<T> finState;
 
     Scanner(DRootState root, TokenReader tr) {
         this.rootState = root.getStartState();
@@ -34,22 +34,40 @@ public class Scanner<T> {
         this.groupList = root.getGroupInfoList();
         this.tr = tr;
     }
-    
+
+    final protected void clear() {
+        tr.accepted();
+        stackState.clear();
+        groupList.clear();
+
+        finState = null;      
+    }
+
+    @SuppressWarnings("unchecked")
+    final protected boolean handleFinStates(int ppos) throws UnknownTokenException {
+        while (finState != null) {
+            finState.saveGroupPos(ppos);
+
+            if (!stackState.isEmpty()) {
+                DState act = stackState.pop();
+                
+                finState = act instanceof DStateFin ? (DStateFin<T>) act : null;
+            } else {
+                break;
+            }
+        }
+
+        return finState != null;
+    }
+
     @SuppressWarnings("unchecked")
     public boolean hasNext() throws UnknownTokenException, IOException {
-        tr.accepted();
-
-        finState = null;
+        if (tr.reachedEndOfReader()) return false;
 
         DState act = rootState;
         int ppos = tr.getPos();
-
-        if (tr.reachedEndOfReader()) {
-            return false;
-        }
-
-        stackState.clear();
-        groupList.clear();
+        
+        clear();
 
         for (char ch = tr.read(); ch != 0; ch = tr.read()) {
             DTransition<DState> trans = act.getTransition(ch);
@@ -57,117 +75,80 @@ public class Scanner<T> {
             if (trans != null) {
                 act = trans.st;
 
-                if (Logger.DEBUG) {
-                    System.out.printf("     Matcher: %s -%c-> %s\n", act.toString(), ch, act.toString());
-                }
-
-                for (Consumer<Integer> cons : trans.groups) {
-                    cons.accept(ppos);
-                }
+                trans.saveGroupPos(ppos);
 
                 if (act instanceof DStateFin) {
                     finState = (DStateFin<T>) act;
 
                     tr.mark();
                 }
-            } else {
-                if (finState == null) {
-                    int offset = tr.getOffset(); // Startpunkt
-                    int trlen = tr.getPos() - tr.getDelta() - offset;
-
-                    throw new UnknownTokenException("Unknown token '" + new String(tr.getBuffer(), offset, trlen) + "'!");
-                }
-
-                tr.reset();
-
-                if (stackState.isEmpty()) {
-                    break;
-                }
-
+                
                 ppos = tr.getPos();
+            } else {
+                if (finState == null) tr.throwUnknownTokenException();
 
-                for (Consumer<Integer> cons : finState.groups) {
-                    cons.accept(ppos);
-                }
+                ppos = tr.reset();
+
+                if (stackState.isEmpty()) break;
+
+                finState.saveGroupPos(ppos);
 
                 finState = null;
                 act = stackState.pop();
             }
-
-            ppos = tr.getPos();
         }
 
-        ppos = tr.reset();
-
-        while (finState != null) {
-            for (Consumer<Integer> cons : finState.groups) {
-                cons.accept(ppos);
-            }
-
-            if (!stackState.isEmpty()) {
-                act = stackState.pop();
-
-                if (Logger.DEBUG) {
-                    System.out.printf("     Matcher: pop state %s\n", act.getName());
-                }
-
-                finState = act instanceof DStateFin ? (DStateFin<T>) act : null;
-            } else {
-                break;
-            }
-        }
-
-        if (finState == null) {
+        if (!handleFinStates(tr.reset())) {
             throw new UnknownTokenException("Unknown token not read '" + tr.getNonReadString() + "'!");
         }
 
         return true;
     }
 
-    public T getNextToken() throws Exception {
+    final public T getNextToken() throws Exception {
         hasNext();
 
         if (finState != null) {
             if (finState.matchToken != null) {
                 return getToken();
             } else {
-                getGroups();
+                applyGroups();
             }
         }
         
         return null;
     }
     
-    public void getAllToken() throws Exception {
+    final public void getAllToken() throws Exception {
         while (hasNext()) {
             if (finState != null) {
                 if (finState.matchToken != null) {
                     getToken();
                 } else {
-                    getGroups();
+                    applyGroups();
                 }
             }
         }
     }
     
-    public void getAllTokens(Consumer<T> cons) throws Exception {
+    final public void getAllTokens(Consumer<T> cons) throws Exception {
         while (hasNext()) {
             if (finState != null) {
                 if (finState.matchToken != null) {
                     cons.accept(getToken());
                 } else {
-                    getGroups();
+                    applyGroups();
                 }
             }
         }
     }
 
-    private void getGroups() throws Exception {
+    final private void applyGroups() throws Exception {
         String regexp = finState.regexp;
         int delta = tr.getDelta();
         
         for (GroupInfo groupinfo : groupList) {
-            if (groupinfo.getRegExp().equals(regexp)) {
+            if (groupinfo.getRegExp() == regexp) {
                 int startPos = groupinfo.getStartPos();
 
                 groupinfo.getGroupMeth().accept(tr.getBuffer(), startPos - delta, groupinfo.getEndPos() - startPos);
@@ -175,16 +156,19 @@ public class Scanner<T> {
         }
     }
     
-    public T getToken() throws Exception {
-        finState.init.init();
+    final public T getToken() throws Exception {
+        if (finState != null) {
+            finState.init.init();
 
-        getGroups();
+            applyGroups();
         
-        int delta = tr.getDelta();
-        int offset = tr.getOffset();
+            int offset = tr.getOffset();
 
-        return finState.matchToken != null 
-                ? finState.matchToken.apply(tr.getBuffer(), offset, tr.getPos() - delta - offset)
-                : null;
+            if (finState.matchToken != null) { 
+                return finState.matchToken.apply(tr.getBuffer(), offset, tr.getPos() - tr.getDelta() - offset);
+            }
+        }
+        
+        return null;
     }
 }

@@ -15,6 +15,7 @@
  */
 package org.jh.extlex;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
@@ -56,7 +57,8 @@ public class TestExample {
         List<String> tokens = new ArrayList<>();
 
         new Lexer<String>()
-            .addPattern("[a-z]+", (char[] text, int start, int length) -> new String(text, start, length))
+            .addPattern("[a-z]+", 
+                    (char[] t, int s, int l) -> new String(t, s, l))
             .addPattern(",")
             .scan("ab,cd")
             .getAllTokens((t) -> tokens.add(t));
@@ -106,4 +108,63 @@ public class TestExample {
         assertEquals(3, to.scan("<<><>>").getNextToken());
         assertEquals(4, to.scan("<<><>><>").getNextToken());
     }
+    
+    @Test
+    // using getXPos and getYPos of TokenReader for retrieving token start position
+    // using getXEndPos and getYEndPos of TokenReader for retrieving token end position
+    public void test5() throws Exception {
+        String str = "ab cd\n ef\nhj\n";
+        List<String> tokens = new ArrayList<>();
+        TokenReader tr = new TokenReader(new StringReader(str));
+        
+        new Lexer<String>()
+                .addPattern("[a-z]+", 
+                        (t,s, l) -> Integer.toString(tr.getYPos()) + ":" + tr.getXPos() + " " + new String(t, s, l))
+                .addPattern("[ \n\r]+")
+                .scan(tr)
+                .getAllTokens((s) -> tokens.add(s));
+
+        assertArrayEquals(new String[]{"1:1 ab", "1:4 cd", "2:2 ef", "3:1 hj"}, tokens.toArray());
+    }
+
+    @Test
+    public void test5WithMatcher() throws Exception {
+        String str = "ab cd\n ef\nhj123\n";
+        List<String> tokens = new ArrayList<>();
+        TokenReader tr = new TokenReader(new StringReader(str));
+        
+        new Lexer<String>()
+                .addPattern("[a-z]+", 
+                        (t,s, l) -> Integer.toString(tr.getYPos()) + ":" + tr.getXPos() + " " + new String(t, s, l))
+                .match(tr)
+                .getAllTokens((s) -> tokens.add(s));
+
+        assertArrayEquals(new String[]{"1:1 ab", "1:4 cd", "2:2 ef", "3:1 hj"}, tokens.toArray());
+    }
+    
+    @Test
+    public void test6() throws Exception {
+        new Lexer<String>()
+                .addPattern("[^{}\\[\\](\\[([a-zA-z]+|[0-9]+|(?R1)){:,}\\]|\\{([a-zA-z]+:(?R1){:,})\\})");
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

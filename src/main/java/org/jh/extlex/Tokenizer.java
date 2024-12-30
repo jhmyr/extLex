@@ -25,10 +25,28 @@ public class Tokenizer<T> {
         this.root = dRoot;
     }
 
-    public Scanner<T> scan(Reader sr) throws Exception {
-        TokenReader tr = new TokenReader(sr, 256).init();
+    public Matcher<T> match(TokenReader tr) throws Exception {
+        return new Matcher<>(root, tr.init());
+    }
+    
+    public Matcher<T> match(Reader sr) throws Exception {
+        TokenReader tr = new TokenReader(sr, 256);
         
-        return new Scanner<>(root, tr);
+        return match(tr);
+    }
+
+    public Matcher<T> match(String input) throws Exception {
+        return match(new StringReader(input));
+    }    
+
+    public Scanner<T> scan(TokenReader tr) throws Exception {
+        return new Scanner<>(root, tr.init());
+    }
+    
+    public Scanner<T> scan(Reader sr) throws Exception {
+        TokenReader tr = new TokenReader(sr, 256);
+        
+        return scan(tr);
     }
 
     public Scanner<T> scan(String input) throws Exception {

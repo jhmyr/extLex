@@ -17,6 +17,7 @@ package org.jh.extlex;
 
 import java.io.IOException;
 import java.io.Reader;
+import org.jh.extlex.exception.UnknownTokenException;
 /**
  * a reader for scanning tokens from an input stream. 
  * The reader provide enough space for keeping one token in the buffer.
@@ -24,12 +25,12 @@ import java.io.Reader;
  * After one token has been read the accepted command must be called for 
  * aligning all internal informations.
  * The reader provides information of the current position (line, position) inside the stream.
- * The strategy of the reader is to read as many tokens into the buffer.
+ * The strategy of the reader is to read as many tokens into the buffer as possible.
  * The buffer will be resized if there exists no accepted buffer and more space is needed.
  * When accepted buffer exists the non accepted range will be moved to the start of the buffer.
- * Therefore the information of shifting the buffer will be saved in the delta variable.
+ * Therefore the variable delta contains the information of shifted buffer.
  */
-class TokenReader {
+public class TokenReader {
     private Reader in = null;
     private int bufSize;
     private final int origBufSize;
@@ -38,18 +39,24 @@ class TokenReader {
     private int offset = 0;
     private int bufLen = 0;
     private char[] buffer = null;
-    private int xpos = 0;
-    private int ypos = 0;
+    private int xpos = 1;
+    private int ypos = 1;
+    private int xstart = 1;
+    private int ystart = 1;
 
     private int match_pos = 0;
-    private int match_xpos = 0;
-    private int match_ypos = 0;
+    private int match_xpos = 1;
+    private int match_ypos = 1;
     
-    TokenReader(Reader in, int bufSize) {
+    public TokenReader(Reader in, int bufSize) {
         this.in = in;
         this.bufSize = bufSize;
         this.origBufSize = bufSize;
         this.buffer = new char[bufSize];
+    }
+    
+    public TokenReader(Reader in) {
+        this(in, 128);
     }
 
     TokenReader init() throws IOException {
@@ -60,7 +67,11 @@ class TokenReader {
     
     final protected char[] getBuffer() { return buffer; }
     final protected int getOffset() { return offset; }
-    final protected int getPos() { return bufPos + delta; }
+    final public int getPos() { return bufPos + delta; }
+    final public int getXPos()  { return xstart; }
+    final public int getYPos()  { return ystart; }
+    final public int getXEndPos() { return xpos; }
+    final public int getYEndPos() { return ypos; }
     final protected int getDelta() { return delta; }
     final protected int getBufSize() { return bufSize; }
     
@@ -93,7 +104,21 @@ class TokenReader {
                 }
             }
         }
-        return bufPos == bufLen? 0 : buffer[bufPos++];
+        
+        if (bufPos == bufLen) {
+            return 0;
+        }
+        
+        char ch = buffer[bufPos++];
+        
+        switch (ch) {
+            case '\n': ypos++;
+            case '\r': xpos = 1;
+                break;
+            default: xpos++;
+        }
+
+        return ch;
     }
     
     final protected void mark() {
@@ -110,8 +135,18 @@ class TokenReader {
         return bufPos;
     }
     
+    final protected int resetToTokenStart() {
+        bufPos = offset;
+        xpos = xstart;
+        ypos = ystart;
+        
+        return bufPos;
+    }
+    
     final protected void accepted() {
         offset = bufPos;
+        xstart = xpos;
+        ystart = ypos;
 
         mark();
     }
@@ -122,5 +157,11 @@ class TokenReader {
 
     final protected String getNonReadString() {
         return bufPos > bufLen ? "" : new String(buffer, bufPos, bufLen - bufPos); 
+    }
+
+    protected void throwUnknownTokenException() throws UnknownTokenException {
+        int trlen = bufPos - delta - offset;
+
+        throw new UnknownTokenException("Unknown token '" + new String(buffer, offset, trlen) + "'!");
     }
 }

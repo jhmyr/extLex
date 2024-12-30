@@ -16,6 +16,7 @@
 
 package org.jh.extlex;
 
+import java.io.Reader;
 import org.jh.extlex.util.SortedList;
 import org.jh.extlex.exception.AmbiguousRuleException;
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public final class Lexer<T> {
     private char actChar;
     private GroupMeth[] actGroupMeths;
     private final List<GroupInfo> groupInfoList = new ArrayList<>();
-    private final List<NDState> openBracketList = new ArrayList<>();
+    private NDState[] bracketList = new NDState[0];
     private final List<RecursiveState> recStateList = new ArrayList<>();
     private Stack<DState> stackOfState;
     private final Map<DState, List<String>> debugInfoDState = new TreeMap<>();
@@ -93,6 +94,10 @@ public final class Lexer<T> {
     }
 
     public Lexer<T> addPattern(String regexp, Initializer init, TokenMeth<T> matchToken, GroupMeth ... matchGroups) throws Exception {
+        if (matchGroups.length > bracketList.length) {
+            bracketList = new NDState[matchGroups.length];
+        }
+        
         NDState node = parse(regexp, init, matchToken, matchGroups);
 
         root.addEmptyTransition(node);
@@ -107,7 +112,6 @@ public final class Lexer<T> {
             roots.add(recState.getInternState());
         }
 
-        openBracketList.clear();
         recStateList.clear();
 
         return this;
@@ -134,7 +138,27 @@ public final class Lexer<T> {
         return new Tokenizer<>(dRoot);
     }
     
+    public Matcher<T> match(String input) throws Exception {
+        return createTokenizer().match(input);
+    }
+    
+    public Matcher<T> match(Reader input) throws Exception {
+        return createTokenizer().match(input);
+    }
+    
+    public Matcher<T> match(TokenReader input) throws Exception {
+        return createTokenizer().match(input);
+    }
+    
     public Scanner<T> scan(String input) throws Exception {
+        return createTokenizer().scan(input);
+    }
+    
+    public Scanner<T> scan(Reader input) throws Exception {
+        return createTokenizer().scan(input);
+    }
+    
+    public Scanner<T> scan(TokenReader input) throws Exception {
         return createTokenizer().scan(input);
     }
     
@@ -230,6 +254,7 @@ public final class Lexer<T> {
 
     NDState parseGroupExpr(List<Transition<NDState>> trans) throws Exception {
         int actBracketNo = bracketNo;
+        int actGroupPos = groupPos;
         BracketInfo brinfo = null;
 
         if (lookahead(0) == '?' && lookahead(1) == ':') {
@@ -250,7 +275,8 @@ public final class Lexer<T> {
         }
 
         if (brinfo != null) {
-            openBracketList.add(state = new OpenBracketState(actBracketNo, state, brinfo));
+            state = new OpenBracketState(actBracketNo, state, brinfo);
+            bracketList[actGroupPos] = state;
 
             NDState closeBracket = new CloseBracketState(actBracketNo, brinfo);
 
@@ -411,11 +437,11 @@ public final class Lexer<T> {
         if ((actChar = getChar()) == '(') {
             actChar = getChar();
             if (actGroupMeths != null && groupPos < actGroupMeths.length) {
-                BracketInfo brinfo = new BracketInfo(actregexp, actGroupMeths[groupPos++], groupInfoList);
+                BracketInfo brinfo = new BracketInfo(actregexp, actGroupMeths[groupPos], groupInfoList);
 
                 forward = true;
-
-                openBracketList.add(quantState = new OpenBracketState(bracketNo, brinfo));
+                quantState = new OpenBracketState(bracketNo, brinfo);               
+                bracketList[groupPos++] = quantState;
 
                 NDState closeBracket = new CloseBracketState(bracketNo, brinfo);
 

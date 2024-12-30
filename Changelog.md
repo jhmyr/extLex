@@ -22,3 +22,13 @@ see [keepchangelog](https://keepachangelog.com/de/1.1.0/)
 ### Fixed
 
 - move Readme_tmp.md back to Readme.md
+
+## [0.3.0] - 2024-12-30
+
+### Added 
+
+- added in TokenReader the methods getXPos and getYPos for reading the start position
+  and getXEndPos and getYPos for reading the end position of the token.
+  See example test5()
+
+- added class Matcher for matching tokens. See example test5WithMatcher
