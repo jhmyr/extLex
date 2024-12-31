@@ -1,14 +1,13 @@
 # ExtLex
 
-Splitting texts into tokens is a central task for many text-processing programs. 
-There are established methods for tokenization, ranging from self-written scanners, the use of
-RegExp to libraries such as lex, flex, jflex, etc. 
+Splitting texts into tokens is a central task for many text-processing programs.
+This process also known as lexical analysis can be implemented by different 
+established methods. Using java tokenizer or RegExp, writing self-written scanners 
+or use libraries such as lex, flex, jflex, etc. 
 
 extLex simplifies the creation of a scanner by specifying everything in Java.
 Using lambda expressions, recognized tokens and each recognized group are processed. 
 Furthermore extLex supports recursive expressions and expressions repeated by a separator e.g. ','. 
-
-Translated with DeepL.com (free version)
 
 ## Installation
 

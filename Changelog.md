@@ -32,3 +32,7 @@ see [keepchangelog](https://keepachangelog.com/de/1.1.0/)
   See example test5()
 
 - added class Matcher for matching tokens. See example test5WithMatcher
+
+## [0.3.1] - 2024-12-31
+
+- changed descritpion of extLex
