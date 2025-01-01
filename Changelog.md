@@ -35,4 +35,4 @@ see [keepchangelog](https://keepachangelog.com/de/1.1.0/)
 
 ## [0.3.1] - 2024-12-31
 
-- changed descritpion of extLex
+- changed description of extLex
