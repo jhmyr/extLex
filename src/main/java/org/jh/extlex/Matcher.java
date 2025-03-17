@@ -35,7 +35,7 @@ public class Matcher<T> extends Scanner<T> {
         clear();
 
         do {
-            for (char ch = tr.read(); ch != 0; ch = tr.read()) {
+            for (int ch = tr.read(); ch != -1; ch = tr.read()) {
                 DTransition<DState> trans = act.getTransition(ch);
 
                 if (trans != null) {

@@ -33,6 +33,16 @@ public class TestExample {
     }
 
     @Test
+    public void test1Recursiv() throws Exception {
+        String token = new Lexer<String>()
+            .addPattern("a(?R)*", (char[] text, int start, int length) -> new String(text, start, length))
+            .scan("aa")
+            .getNextToken();
+        
+        assertEquals("aa", token);
+    }
+
+    @Test
     public void test2() throws Exception {
         List<String> tokens = new ArrayList<>();
 
@@ -57,7 +67,7 @@ public class TestExample {
         List<String> tokens = new ArrayList<>();
 
         new Lexer<String>()
-            .addPattern("[a-z]+", 
+            .addPattern("[a-z]+",
                     (char[] t, int s, int l) -> new String(t, s, l))
             .addPattern(",")
             .scan("ab,cd")
@@ -143,9 +153,21 @@ public class TestExample {
     }
     
     @Test
-    public void test6() throws Exception {
+    public void test6EmptyOr() throws Exception {
+        Tokenizer<String> to = new Lexer<String>()
+                .addPattern("(a|b|)c", 
+                        (t,s,l) -> { return new String(t,s,l);})
+                .createTokenizer();
+        
+        assertEquals("ac", to.scan("ac").getNextToken());
+        assertEquals("bc", to.scan("bc").getNextToken());
+        assertEquals("c", to.scan("c").getNextToken());
+    }
+    
+    //@Test
+    public void test7() throws Exception {
         new Lexer<String>()
-                .addPattern("[^{}\\[\\](\\[([a-zA-z]+|[0-9]+|(?R1)){:,}\\]|\\{([a-zA-z]+:(?R1){:,})\\})");
+                .addPattern("\\{[ \t\n\r)*([^ \t\n\r\"0-9][^ \t\n\r\"]+|\"([^\\\"]|\\.)*\"|[0-9]*){: \n\r\t}\\}\\[([a-zA-z]+)|[0-9]+){:,}\\]|\\{(?R1){:,})\\})");
     }
 }
 

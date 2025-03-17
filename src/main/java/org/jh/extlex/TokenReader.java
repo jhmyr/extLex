@@ -75,10 +75,10 @@ public class TokenReader {
     final protected int getDelta() { return delta; }
     final protected int getBufSize() { return bufSize; }
     
-    final protected char read() throws IOException {
+    final protected int read() throws IOException {
         if (bufPos == bufLen) { // increase buffer
             if (bufPos < bufSize) {
-                return 0; // no more characters are available
+                return -1; // no more characters are available
             } else {
                 if (offset == 0) {
                     int newBufSize = bufSize + origBufSize;
@@ -106,7 +106,7 @@ public class TokenReader {
         }
         
         if (bufPos == bufLen) {
-            return 0;
+            return -1;
         }
         
         char ch = buffer[bufPos++];

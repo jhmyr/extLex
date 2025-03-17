@@ -19,13 +19,19 @@ import java.util.List;
 
 class RecursiveState extends NDState {
     private final NDState internState;
+    private final int groupNo;
     
-    RecursiveState(List<Transition<NDState>> acttrans) throws Exception {      
+    RecursiveState(List<Transition<NDState>> acttrans, int groupNo) throws Exception {      
         this.internState = new NDState(acttrans);
+        this.groupNo = groupNo;
     }
     
     final protected NDState getInternState() {
         return internState;
+    }
+    
+    final protected int getGroupNo() {
+        return groupNo;
     }
     
     @Override

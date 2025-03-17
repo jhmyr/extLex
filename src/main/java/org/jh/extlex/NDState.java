@@ -38,6 +38,12 @@ class NDState extends State<NDState> implements SortKey {
         this.stateNo = stateNo;
     }
     
+    NDState(int stateNo, NDState state) {
+        this(stateNo);
+        
+        addEmptyTransition(state);
+    }
+    
     NDState(List<Transition<NDState>> acttrans) {       
         Transition<NDState> trans = new Transition<>();
         
@@ -47,7 +53,7 @@ class NDState extends State<NDState> implements SortKey {
     }
     
     NDState(NDState nextState) {
-        transSet.add(new Transition<>(nextState));
+        addEmptyTransition(nextState);
     }
     
     protected void addRecState(DState recState) throws Exception {

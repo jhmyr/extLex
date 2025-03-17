@@ -26,21 +26,21 @@ import org.junit.jupiter.api.Test;
  */
 public class TokenReaderTest {
     StringBuilder sb;
-    char ch;
+    int ch;
 
     public TokenReaderTest() {
         sb = new StringBuilder();
     }
     
     void readToSB(TokenReader tr) throws IOException {
-        while ((ch = tr.read()) != 0) {
-            sb.append(ch);
+        while ((ch = tr.read()) != -1) {
+            sb.append((char)ch);
         }        
     }
 
     void readNoCharToSB(TokenReader tr, int no) throws IOException {
         for (int i = 0; i < no; i++) {
-            sb.append(tr.read());
+            sb.append((char)tr.read());
         }        
     }
 
@@ -69,8 +69,8 @@ public class TokenReaderTest {
         StringReader sr = new StringReader("abc_def");
         TokenReader tr = new TokenReader(sr, 8).init();
         
-        while ((ch = tr.read()) != 0) {
-            sb.append(ch);
+        while ((ch = tr.read()) != -1) {
+            sb.append((char)ch);
             
             if (ch == '_') {
                 tr.mark();

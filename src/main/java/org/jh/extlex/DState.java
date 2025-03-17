@@ -72,7 +72,7 @@ public class DState extends State<DState> implements Comparable<DState> {
         return trans != null? trans.st : null;
     }
     
-    protected DTransition<DState> getTransition(char key) {
+    protected DTransition<DState> getTransition(int key) {
         return transitions.find(key);
     }
     
@@ -88,10 +88,6 @@ public class DState extends State<DState> implements Comparable<DState> {
     
     final protected int noOfTransitions() {
         return transitions.size();
-    }
-    
-    final protected DTransition<DState> getTransition(int pos) {
-        return transitions.get(pos);
     }
     
     @Override

@@ -36,3 +36,8 @@ see [keepchangelog](https://keepachangelog.com/de/1.1.0/)
 ## [0.3.1] - 2024-12-31
 
 - changed description of extLex
+
+## [0.3.2] - 2025-03-01
+
+- Seperate creation of DFA into class DFACreator
+- fix bug parsing (a|b|)
